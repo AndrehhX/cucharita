@@ -1,16 +1,36 @@
-import { Settings, Folder, HelpCircle, LogOut, ChevronRight, Volume2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Settings, Folder, HelpCircle, ChevronRight, Volume2, Trash2, Cloud, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { useProfile } from './store';
 import { useFavorites } from '../favorites/store';
 import { useCollections } from '../collections/store';
 import { Reveal } from '../../components/Reveal';
+import { isSupabaseConfigured } from '../../repositories/supabase';
+import { syncLocalDataToRemote, type SyncReport } from '../../repositories/sync';
+import { Btn } from '../../components/ui';
 
 export default function Profile() {
   const { name, tagline, cookedCount, audioEnabled, setName, setAudio, resetLocal } = useProfile();
   const { ids } = useFavorites();
   const { collections } = useCollections();
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncReport, setSyncReport] = useState<SyncReport | null>(null);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncReport(null);
+    try {
+      // Intentamos sincronizar si hubiera una sesión
+      const report = await syncLocalDataToRemote('guest-sync-profile');
+      setSyncReport(report);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
-    <div className="px-4 md:px-2 pt-safe">
+    <div className="px-4 md:px-2 pt-safe pb-8">
+      {/* Profile Card */}
       <Reveal className="relative mt-4 overflow-hidden rounded-[2rem] bg-white shadow-card border border-black/[0.04] p-6 text-center">
         <span className="blob w-56 h-32 bg-miel-soft -left-10 -top-10 rotate-[-14deg]" />
         <span className="blob w-56 h-32 bg-cielo-soft -right-10 -top-8 rotate-[14deg]" />
@@ -35,27 +55,83 @@ export default function Profile() {
         </div>
       </Reveal>
 
-      <div className="mt-3 bg-white rounded-[1.6rem] shadow-soft border border-black/[0.04] divide-y divide-black/5 overflow-hidden">
-        <Row icon={<Folder className="text-coral" />} label="Mis carpetas" hint={`${collections.length}`} />
-        <Row icon={<Settings className="text-coral" />} label="Configuración" />
-        <Row icon={<HelpCircle className="text-coral" />} label="Ayuda y soporte" />
-        <button onClick={() => { if (confirm('¿Borrar datos locales (favoritos y carpetas)?')) resetLocal(); }} className="w-full flex items-center gap-3 px-4 py-4 font-bold text-left min-h-[56px] hover:bg-crema transition">
-          <span className="w-9 h-9 grid place-items-center bg-crema rounded-xl"><Trash2 className="w-5 h-5 text-coral" /></span>
-          Borrar datos locales <ChevronRight className="ml-auto w-4 h-4 text-carbon-muted" />
-        </button>
-        <Row icon={<LogOut className="text-coral" />} label="Cerrar sesión" />
+      {/* Sincronización y Estado de la Cuenta */}
+      <div className="mt-3 bg-white rounded-[1.6rem] shadow-soft border border-black/[0.04] p-5">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-8 h-8 rounded-xl bg-cielo-soft text-cielo-dark grid place-items-center">
+            <Cloud className="w-4 h-4" />
+          </span>
+          <div>
+            <p className="text-sm font-extrabold">
+              {isSupabaseConfigured() ? 'Sincronización en la nube disponible' : 'Modo local activo (Invitado)'}
+            </p>
+            <p className="text-[11px] font-bold text-carbon-muted">
+              {isSupabaseConfigured()
+                ? 'Tus datos locales pueden sincronizarse de forma segura y sin duplicados.'
+                : 'Tus recetas guardadas y calificaciones se almacenan en este dispositivo sin requerir registro.'}
+            </p>
+          </div>
+        </div>
+
+        {isSupabaseConfigured() && (
+          <div className="mt-3">
+            <Btn variant="outline" className="w-full !py-2.5 text-sm" onClick={handleSync} disabled={syncing}>
+              {syncing ? 'Sincronizando sin pérdidas...' : 'Sincronizar favoritos y carpetas'}
+            </Btn>
+            {syncReport && (
+              <div className="mt-2 p-3 bg-crema rounded-xl text-[12px] font-bold text-carbon-soft flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                <span>
+                  Sincronización completada: {syncReport.migratedFavoritesCount} favoritos y {syncReport.migratedCollectionsCount} carpetas.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Privacidad infantil y seguridad */}
+      <div className="mt-3 bg-[#F0F7EE] rounded-[1.6rem] p-4 border border-[#D5ECD0] flex items-start gap-3">
+        <span className="w-8 h-8 rounded-xl bg-[#D5ECD0] text-[#2F7A3D] grid place-items-center shrink-0 mt-0.5">
+          <ShieldCheck className="w-5 h-5" />
+        </span>
+        <div className="text-[12px]">
+          <p className="font-extrabold text-[#245D30]">Espacio seguro y privado</p>
+          <p className="text-[#3A7548] font-bold mt-0.5">
+            Cucharita no recopila datos personales, no incluye anuncios ni funciones sociales públicas. Diseñada especialmente para disfrutar la cocina en familia con total tranquilidad.
+          </p>
+        </div>
+      </div>
+
+      {/* Menú de opciones */}
+      <div className="mt-3 bg-white rounded-[1.6rem] shadow-soft border border-black/[0.04] divide-y divide-black/5 overflow-hidden">
+        <Row icon={<Folder className="text-coral" />} label="Mis carpetas" hint={`${collections.length}`} />
+        <Row icon={<Settings className="text-coral" />} label="Configuración de recetas" />
+        <Row icon={<HelpCircle className="text-coral" />} label="Ayuda y sugerencias" />
+        <button
+          onClick={() => {
+            if (confirm('¿Deseas reiniciar tus datos locales (favoritos y carpetas creadas)?')) {
+              resetLocal();
+            }
+          }}
+          className="w-full flex items-center gap-3 px-4 py-4 font-bold text-left min-h-[56px] hover:bg-crema transition text-carbon"
+        >
+          <span className="w-9 h-9 grid place-items-center bg-crema rounded-xl"><Trash2 className="w-5 h-5 text-coral" /></span>
+          Reiniciar datos locales <ChevronRight className="ml-auto w-4 h-4 text-carbon-muted" />
+        </button>
+      </div>
+
+      {/* Audio */}
       <div className="mt-3 bg-white rounded-[1.6rem] shadow-soft border border-black/[0.04] p-5">
-        <p className="font-extrabold flex items-center gap-2"><Volume2 className="w-4 h-4 text-cielo-dark" /> Audio de instrucciones</p>
-        <label className="mt-2.5 flex items-center justify-between text-sm font-extrabold">
-          <span>{audioEnabled ? 'Activado' : 'Desactivado'}</span>
-          <button role="switch" aria-checked={audioEnabled} aria-label="Activar audio" onClick={() => setAudio(!audioEnabled)} className={`w-13 h-7 w-[52px] rounded-full p-1 transition ${audioEnabled ? 'bg-coral' : 'bg-black/15'}`}>
-            <span className={`block w-5 h-5 bg-white rounded-full shadow transition ${audioEnabled ? 'ml-auto' : ''}`} />
+        <p className="font-extrabold flex items-center gap-2"><Volume2 className="w-4 h-4 text-cielo-dark" /> Asistente de voz en cocina</p>
+        <label className="mt-2.5 flex items-center justify-between text-sm font-extrabold cursor-pointer">
+          <span>{audioEnabled ? 'Activado (dictado por voz)' : 'Desactivado (solo lectura)'}</span>
+          <button role="switch" aria-checked={audioEnabled} aria-label="Activar audio" onClick={() => setAudio(!audioEnabled)} className={`w-[52px] h-7 rounded-full p-1 transition ${audioEnabled ? 'bg-coral' : 'bg-black/15'}`}>
+            <span className={`block w-5 h-5 bg-white rounded-full shadow transition-all ${audioEnabled ? 'ml-auto' : ''}`} />
           </button>
         </label>
-        <p className="text-[12px] text-carbon-soft mt-2.5 font-semibold">Usamos la voz del dispositivo (Web Speech API). Sin soporte, las instrucciones se muestran en texto.</p>
-        <p className="text-[11px] text-carbon-muted mt-2 font-bold">Cucharita v0.1 • Modo local. Tus datos se quedan en este dispositivo. Precios en Q son estimaciones.</p>
+        <p className="text-[12px] text-carbon-soft mt-2.5 font-semibold">Usamos la síntesis nativa del dispositivo (Web Speech API). Sin conexión o sin soporte, las instrucciones se muestran siempre en texto.</p>
+        <p className="text-[11px] text-carbon-muted mt-2 font-bold">Cucharita v0.3 • Precios en Quetzales son estimaciones referenciales.</p>
       </div>
     </div>
   );

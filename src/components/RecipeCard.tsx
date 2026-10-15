@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
-import { Clock, Heart, Users } from 'lucide-react';
+import { Clock, Heart, Users, Star } from 'lucide-react';
 import type { Recipe } from '../types';
 import { useFavorites } from '../features/favorites/store';
+import { useRecipeRating } from '../repositories/ratings';
 import SafeImage from './SafeImage';
 import { PricePill, VegBadge } from './ui';
 import { Reveal } from './Reveal';
 
 export default function RecipeCard({ r, delay = 0 }: { r: Recipe; delay?: number }) {
   const { isFav, toggle } = useFavorites();
+  const { summary } = useRecipeRating(r.id);
   const fav = isFav(r.id);
   return (
     <Reveal delay={delay} className="h-full">
@@ -23,9 +25,15 @@ export default function RecipeCard({ r, delay = 0 }: { r: Recipe; delay?: number
             <span className="absolute bottom-2 right-2">
               <PricePill price={r.basePriceQ} servings={r.baseServings} />
             </span>
-            {r.vegetarian && (
-              <span className="absolute top-2 left-2"><VegBadge /></span>
-            )}
+            <div className="absolute top-2 left-2 flex gap-1 items-center">
+              {r.vegetarian && <VegBadge />}
+              {summary.totalRatings > 0 && (
+                <span className="bg-white/95 backdrop-blur-xs text-carbon text-[11px] font-extrabold px-2 py-0.5 rounded-full shadow-soft flex items-center gap-1">
+                  <Star className="w-3 h-3 text-miel fill-miel" />
+                  {summary.averageRating}
+                </span>
+              )}
+            </div>
           </div>
           <div className="p-3">
             <h3 className="font-display font-bold leading-[1.15] line-clamp-2 min-h-[2.5em] text-[15px]">{r.name}</h3>
