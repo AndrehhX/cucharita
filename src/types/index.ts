@@ -119,6 +119,7 @@ export interface Filters {
   q: string;
   price: 'all' | 'low' | 'mid' | 'high';
   servings: 'all' | '1-2' | '3-4' | '5+';
+  ingredientCount?: 'all' | 'few' | 'many';
   onlyVeg: boolean;
   onlyDessert: boolean;
   category: CategoryId | 'todas';

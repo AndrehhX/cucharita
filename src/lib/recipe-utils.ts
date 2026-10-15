@@ -113,6 +113,8 @@ export function filterRecipes(recipes: Recipe[], f: Filters): Recipe[] {
       if (f.servings === '3-4' && !(s >= 3 && s <= 4)) return false;
       if (f.servings === '5+' && !(s >= 5)) return false;
     }
+    if (f.ingredientCount === 'few' && r.ingredients.length > 5) return false;
+    if (f.ingredientCount === 'many' && r.ingredients.length <= 5) return false;
     if (f.maxTime && r.timeMin > f.maxTime) return false;
     if (q) {
       const hay = `${r.name} ${r.description} ${r.ingredients.map((i) => i.name).join(' ')}`.toLowerCase();

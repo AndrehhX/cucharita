@@ -16,6 +16,7 @@ export default function Explore() {
   const [q, setQ] = useState('');
   const [price, setPrice] = useState<Filters['price']>('all');
   const [servings, setServings] = useState<Filters['servings']>('all');
+  const [ingredientCount, setIngredientCount] = useState<Filters['ingredientCount']>('all');
   const [onlyVeg, setOnlyVeg] = useState(false);
   const [onlyDessert, setOnlyDessert] = useState(false);
   const [sort, setSort] = useState<Filters['sort']>('relevance');
@@ -40,13 +41,13 @@ export default function Explore() {
     : 'todas';
 
   const results = useMemo(() => {
-    const f: Filters = { q, price, servings, onlyVeg, onlyDessert, category, sort };
+    const f: Filters = { q, price, servings, ingredientCount, onlyVeg, onlyDessert, category, sort };
     if (sp.get('fast') === '1') return filterRecipes(recipes, { ...f, sort: 'time' }).filter((r) => r.timeMin <= 20);
     return filterRecipes(recipes, f);
-  }, [q, price, servings, onlyVeg, onlyDessert, category, sort, sp, recipes]);
+  }, [q, price, servings, ingredientCount, onlyVeg, onlyDessert, category, sort, sp, recipes]);
 
   const clear = () => {
-    setQ(''); setPrice('all'); setServings('all'); setOnlyVeg(false); setOnlyDessert(false);
+    setQ(''); setPrice('all'); setServings('all'); setIngredientCount('all'); setOnlyVeg(false); setOnlyDessert(false);
     setSp({});
   };
 
@@ -98,6 +99,15 @@ export default function Explore() {
             <Chip active={servings === '1-2'} onClick={() => setServings(servings === '1-2' ? 'all' : '1-2')}>1–2</Chip>
             <Chip active={servings === '3-4'} onClick={() => setServings(servings === '3-4' ? 'all' : '3-4')}>3–4</Chip>
             <Chip active={servings === '5+'} onClick={() => setServings(servings === '5+' ? 'all' : '5+')}>5+</Chip>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <p className="text-[13px] font-extrabold text-coral-deep mb-1.5">Cantidad de ingredientes</p>
+          <div className="flex gap-2 flex-wrap">
+            <Chip active={ingredientCount === 'all'} onClick={() => setIngredientCount('all')}>Todos</Chip>
+            <Chip active={ingredientCount === 'few'} onClick={() => setIngredientCount('few')}>Pocos (≤ 5 ing.)</Chip>
+            <Chip active={ingredientCount === 'many'} onClick={() => setIngredientCount('many')}>Muchos (&gt; 5 ing.)</Chip>
           </div>
         </div>
 

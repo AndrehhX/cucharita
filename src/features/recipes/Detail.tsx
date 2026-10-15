@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Heart, Share2, Clock, Minus, Plus, Play,
+  ArrowLeft, Heart, Share2, Clock, Minus, Plus, Play, Pause, RotateCcw,
   Volume2, Check, Timer, Leaf, Gauge, Star, BadgePercent,
   Info, ExternalLink, ChevronDown, ChevronUp, MapPin,
 } from 'lucide-react';
 import { getRecipe } from '../../data/catalog';
-import { calculateBudgetBreakdown, formatQty, scaleQuantity } from '../../lib/recipe-utils';
+import { calculateBudgetBreakdown, formatClock, formatQty, scaleQuantity } from '../../lib/recipe-utils';
+import { useCountdown } from '../../hooks/useCountdown';
 import { useFavorites } from '../favorites/store';
 import { useCollections } from '../collections/store';
 import { Btn, Empty } from '../../components/ui';
@@ -260,15 +261,17 @@ export default function Detail() {
                   {s.image && <SafeImage src={s.image} alt={`Paso ${i + 1}`} className="w-20 h-20 md:w-28 md:h-24 object-cover rounded-xl shrink-0" />}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold leading-relaxed">{s.instruction}</p>
-                    <div className="mt-1.5 flex items-center gap-2">
+                    <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                       {s.minutes ? (
-                        <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-coral-deep bg-white px-2.5 py-1 rounded-full shadow-soft">
-                          <Timer className="w-3.5 h-3.5" /> {s.minutes}:00
-                        </span>
+                        <StepInlineTimer minutes={s.minutes} />
                       ) : null}
                       {audioEnabled && supportsSpeech() && (
-                        <button aria-label={`Escuchar paso ${i + 1}`} onClick={() => speak(s.instruction)} className="w-8 h-8 grid place-items-center bg-white rounded-full shadow-soft active:scale-90 transition">
-                          <Play className="w-3.5 h-3.5" />
+                        <button
+                          aria-label={`Escuchar paso ${i + 1}`}
+                          onClick={() => speak(s.instruction)}
+                          className="inline-flex items-center gap-1 text-[12px] font-extrabold text-cielo-dark bg-cielo-soft px-2.5 py-1 rounded-full shadow-soft hover:scale-105 active:scale-95 transition"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" /> Escuchar
                         </button>
                       )}
                     </div>
@@ -319,6 +322,43 @@ export default function Detail() {
           </div>
         </Reveal>
       </div>
+    </div>
+  );
+}
+
+function StepInlineTimer({ minutes }: { minutes: number }) {
+  const timer = useCountdown(minutes * 60);
+
+  return (
+    <div className="inline-flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-full shadow-soft text-[12px] font-extrabold text-coral-deep border border-black/5">
+      <Timer className="w-3.5 h-3.5 text-coral shrink-0" />
+      <span className="tabular-nums font-mono">{formatClock(timer.left)}</span>
+      {!timer.running ? (
+        <button
+          aria-label="Iniciar cronómetro del paso"
+          onClick={() => timer.start()}
+          className="w-5 h-5 grid place-items-center rounded-full bg-coral text-white ml-0.5 hover:scale-105 active:scale-95 transition"
+        >
+          <Play className="w-2.5 h-2.5 fill-current" />
+        </button>
+      ) : (
+        <button
+          aria-label="Pausar cronómetro del paso"
+          onClick={timer.pause}
+          className="w-5 h-5 grid place-items-center rounded-full bg-carbon text-white ml-0.5 active:scale-95 transition"
+        >
+          <Pause className="w-2.5 h-2.5 fill-current" />
+        </button>
+      )}
+      {timer.left < timer.total && (
+        <button
+          aria-label="Reiniciar cronómetro"
+          onClick={timer.reset}
+          className="w-5 h-5 grid place-items-center rounded-full bg-black/5 text-carbon-soft hover:bg-black/10 active:scale-95 transition"
+        >
+          <RotateCcw className="w-2.5 h-2.5" />
+        </button>
+      )}
     </div>
   );
 }

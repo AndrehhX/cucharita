@@ -1,7 +1,8 @@
 import type { Recipe } from '../types';
 import { img } from '../lib/recipe-utils';
+import { EXPANDED_RECIPES } from './catalog-expansion';
 
-export const RECIPES: Recipe[] = [
+const BASE_RECIPES: Recipe[] = [
   {
     id: 'pasta-alfredo',
     name: 'Pasta Alfredo',
@@ -775,6 +776,8 @@ export const RECIPES: Recipe[] = [
   },
 ];
 
+export const RECIPES: Recipe[] = [...BASE_RECIPES, ...EXPANDED_RECIPES];
+
 export const getRecipe = (id: string) => RECIPES.find((r) => r.id === id);
 
 export const POPULAR_IDS = [
@@ -784,6 +787,10 @@ export const POPULAR_IDS = [
   'pasta-alfredo',
   'rellenitos-platano',
   'tacos-pollo',
+  'kakik-coban',
+  'mac-and-cheese',
+  'waffles-caseros',
+  'chuchitos-pollo',
 ];
 
 export const GUATEMALAN_IDS = [
@@ -794,6 +801,16 @@ export const GUATEMALAN_IDS = [
   'hilachas-guate',
   'atol-elote',
   'enchiladas-guate',
+  'kakik-coban',
+  'jocon-pollo',
+  'chuchitos-pollo',
+  'platanos-mole',
+  'dobladas-guate',
+  'torrejas-miel',
+  'pan-banano',
+  'caldo-res',
+  'rosa-jamaica',
+  'horchata-artesanal',
 ];
 
 export const QUICK_IDS = RECIPES.filter((r) => r.timeMin <= 20).map((r) => r.id);

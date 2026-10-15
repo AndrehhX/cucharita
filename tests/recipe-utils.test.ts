@@ -210,3 +210,58 @@ describe('temporizadores con timestamp', () => {
     expect(left).toBeLessThanOrEqual(5000);
   });
 });
+
+describe('filtro de cantidad de ingredientes (pocos vs muchos)', () => {
+  const shortRecipe: Recipe = {
+    ...base,
+    id: 'corta',
+    ingredients: [
+      { name: 'Huevo', quantity: 2, unit: 'u' },
+      { name: 'Sal', quantity: 1, unit: 'pizca' },
+    ],
+  };
+
+  const longRecipe: Recipe = {
+    ...base,
+    id: 'larga',
+    ingredients: [
+      { name: 'A', quantity: 1, unit: 'u' },
+      { name: 'B', quantity: 1, unit: 'u' },
+      { name: 'C', quantity: 1, unit: 'u' },
+      { name: 'D', quantity: 1, unit: 'u' },
+      { name: 'E', quantity: 1, unit: 'u' },
+      { name: 'F', quantity: 1, unit: 'u' },
+    ],
+  };
+
+  it('filtra correctamente recetas con pocos ingredientes (<= 5)', () => {
+    const list = [shortRecipe, longRecipe];
+    const filtered = filterRecipes(list, {
+      q: '',
+      price: 'all',
+      servings: 'all',
+      ingredientCount: 'few',
+      onlyVeg: false,
+      onlyDessert: false,
+      category: 'todas',
+      sort: 'relevance',
+    });
+    expect(filtered.map((r) => r.id)).toEqual(['corta']);
+  });
+
+  it('filtra correctamente recetas con muchos ingredientes (> 5)', () => {
+    const list = [shortRecipe, longRecipe];
+    const filtered = filterRecipes(list, {
+      q: '',
+      price: 'all',
+      servings: 'all',
+      ingredientCount: 'many',
+      onlyVeg: false,
+      onlyDessert: false,
+      category: 'todas',
+      sort: 'relevance',
+    });
+    expect(filtered.map((r) => r.id)).toEqual(['larga']);
+  });
+});
+

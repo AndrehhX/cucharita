@@ -3,8 +3,8 @@ import { RECIPES, getRecipe, POPULAR_IDS, GUATEMALAN_IDS, QUICK_IDS, DRINK_IDS }
 import { calculateBudgetBreakdown } from '../src/lib/recipe-utils';
 
 describe('Auditoría Integral del Catálogo de Recetas', () => {
-  it('contiene al menos 24 recetas completas y válidas', () => {
-    expect(RECIPES.length).toBeGreaterThanOrEqual(24);
+  it('contiene al menos 48 recetas completas y válidas', () => {
+    expect(RECIPES.length).toBeGreaterThanOrEqual(48);
   });
 
   it('no contiene identificadores duplicados', () => {
