@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --crema: #F9F3E9;
+  --coral: #EF705D;
+  --cielo: #7CA9D6;
+  --miel: #E9B85D;
+  --carbon: #292B35;
+}
+
+html { -webkit-tap-highlight-color: transparent; }
+body {
+  @apply bg-crema text-carbon font-sans antialiased;
+  overscroll-behavior-y: none;
+}
+
+#root { min-height: 100dvh; }
+
+/* safe-area for Capacitor / mobile */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.card-press { transition: transform .15s ease, box-shadow .15s ease; }
+.card-press:active { transform: scale(.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+.skeleton {
+  @apply animate-pulse bg-gradient-to-r from-cremaDark via-white to-cremaDark bg-[length:200%_100%];
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid #7CA9D6;
+  outline-offset: 2px;
+}
