@@ -102,19 +102,21 @@ export async function getCurrentUserRating(recipeId: string): Promise<UserRating
   if (sb) {
     try {
       const { data: user } = await sb.auth.getUser();
-      const query = sb.from('recipe_ratings').select('rating, updated_at').eq('recipe_id', recipeId);
       if (user?.user) {
-        query.eq('user_id', user.user.id);
-      } else {
-        query.eq('client_id', clientId);
-      }
-      const { data, error } = await query.maybeSingle();
-      if (!error && data) {
-        return {
-          recipeId,
-          rating: data.rating,
-          updatedAt: new Date(data.updated_at).getTime(),
-        };
+        const { data, error } = await sb
+          .from('recipe_ratings')
+          .select('rating, updated_at')
+          .eq('recipe_id', recipeId)
+          .eq('user_id', user.user.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          return {
+            recipeId,
+            rating: data.rating,
+            updatedAt: new Date(data.updated_at).getTime(),
+          };
+        }
       }
     } catch {
       // fallback a local
@@ -133,19 +135,34 @@ export async function getCurrentUserRating(recipeId: string): Promise<UserRating
   return null;
 }
 
+export interface RatingSubmissionResult {
+  success: boolean;
+  summary: RecipeRatingSummary;
+  userRating: UserRating;
+  isLocalOnly: boolean;
+  message?: string;
+}
+
 /**
- * Envía o edita la calificación auténtica de 1 a 5 estrellas para una receta.
+ * Guarda o edita la calificación de 1 a 5 estrellas para una receta.
+ * SEGURIDAD (PostgreSQL / RLS):
+ * - Los identificadores anónimos de localStorage NO se consideran prueba de identidad remota.
+ * - En modo invitado (sin sesión auth verificada), la valoración se guarda estrictamente en el
+ *   almacenamiento local del dispositivo para referencia personal del usuario.
+ * - No se envían escrituras públicas no autenticadas a la base de datos remota para evitar manipulación
+ *   de promedios o suplantación de identidades.
+ * - Solo si existe una sesión autenticada con user_id válido, se sincroniza con el servidor.
  */
 export async function submitRecipeRating(
   recipeId: string,
   rating: number,
-): Promise<{ success: boolean; summary: RecipeRatingSummary; userRating: UserRating }> {
+): Promise<RatingSubmissionResult> {
   const validRating = Math.min(5, Math.max(1, Math.round(rating)));
   const clientId = getClientId();
   const now = Date.now();
   const userRating: UserRating = { recipeId, rating: validRating, updatedAt: now };
 
-  // Siempre persistir localmente primero para consistencia y offline
+  // 1. Guardar localmente en el dispositivo
   const store = readLocalStore();
   if (!store[recipeId]) store[recipeId] = {};
   store[recipeId][clientId] = { rating: validRating, updatedAt: now };
@@ -153,30 +170,43 @@ export async function submitRecipeRating(
 
   const localSummary = computeSummaryFromEntries(Object.values(store[recipeId]), recipeId);
 
+  // 2. Verificar si hay sesión de usuario autenticada para persistencia remota
   const sb = getSupabase();
   if (sb) {
     try {
       const { data: userData } = await sb.auth.getUser();
-      const payload: Record<string, unknown> = {
-        recipe_id: recipeId,
-        client_id: clientId,
-        rating: validRating,
-        updated_at: new Date(now).toISOString(),
-      };
       if (userData?.user) {
-        payload.user_id = userData.user.id;
-      }
+        // Usuario con sesión verificada: escritura remota autorizada bajo RLS
+        const payload = {
+          recipe_id: recipeId,
+          user_id: userData.user.id,
+          rating: validRating,
+          updated_at: new Date(now).toISOString(),
+        };
 
-      await sb.from('recipe_ratings').upsert(payload, { onConflict: 'recipe_id,client_id' });
-      // Si tuvo éxito, recalcular resumen remoto
-      const remoteSummary = await getRecipeRatingSummary(recipeId);
-      return { success: true, summary: remoteSummary, userRating };
+        await sb.from('recipe_ratings').upsert(payload, { onConflict: 'recipe_id,user_id' });
+        const remoteSummary = await getRecipeRatingSummary(recipeId);
+        return {
+          success: true,
+          summary: remoteSummary,
+          userRating,
+          isLocalOnly: false,
+          message: 'Valoración guardada en tu cuenta.',
+        };
+      }
     } catch {
-      // guardado local completado
+      // continuar en modo local
     }
   }
 
-  return { success: true, summary: localSummary, userRating };
+  // Modo invitado: la valoración se conserva segura en el dispositivo del usuario
+  return {
+    success: true,
+    summary: localSummary,
+    userRating,
+    isLocalOnly: true,
+    message: 'Valoración guardada en tu dispositivo (modo local).',
+  };
 }
 
 /**
@@ -190,6 +220,7 @@ export function useRecipeRating(recipeId: string) {
     counts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
   });
   const [userRating, setUserRating] = useState<number | null>(null);
+  const [isLocalOnly, setIsLocalOnly] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -214,12 +245,14 @@ export function useRecipeRating(recipeId: string) {
     const res = await submitRecipeRating(recipeId, score);
     setSummary(res.summary);
     setUserRating(res.userRating.rating);
+    setIsLocalOnly(res.isLocalOnly);
     return res;
   };
 
   return {
     summary,
     userRating,
+    isLocalOnly,
     loading,
     rate,
     refresh,

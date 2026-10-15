@@ -29,7 +29,7 @@ export default function Detail() {
   const [showBudget, setShowBudget] = useState(false);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
-  const { summary, userRating, rate } = useRecipeRating(id);
+  const { summary, userRating, isLocalOnly, rate } = useRecipeRating(id);
 
   const budget = useMemo(() => (r ? calculateBudgetBreakdown(r, servings) : null), [r, servings]);
 
@@ -119,7 +119,11 @@ export default function Detail() {
                     )}
                   </p>
                   <p className="text-[11px] font-bold text-carbon-muted">
-                    {userRating ? 'Tu valoración está guardada (puedes cambiarla)' : 'Sé la primera persona en calificar esta receta'}
+                    {userRating
+                      ? isLocalOnly
+                        ? 'Tu valoración está guardada en este dispositivo (modo local)'
+                        : 'Tu valoración está guardada en tu cuenta'
+                      : 'Sé la primera persona en calificar esta receta'}
                   </p>
                 </div>
               </div>

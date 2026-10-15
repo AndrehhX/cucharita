@@ -27,6 +27,7 @@ describe('sistema de calificaciones auténticas y persistencia', () => {
     // Primera valoración: 4 estrellas
     const res1 = await submitRecipeRating(recipeId, 4);
     expect(res1.success).toBe(true);
+    expect(res1.isLocalOnly).toBe(true);
     expect(res1.summary.totalRatings).toBe(1);
     expect(res1.summary.averageRating).toBe(4);
     expect(res1.summary.counts[4]).toBe(1);

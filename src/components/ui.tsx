@@ -78,3 +78,13 @@ export function Empty({ title, hint }: { title: string; hint?: string }) {
 export function SkeletonCard() {
   return <div className="skeleton rounded-3xl aspect-[4/5]" />;
 }
+
+export function PageLoader() {
+  return (
+    <div className="p-8 text-center flex flex-col items-center justify-center min-h-[40vh] space-y-3" role="status" aria-label="Cargando contenido">
+      <div className="w-10 h-10 rounded-full border-4 border-coral/20 border-t-coral animate-spin" />
+      <p className="font-display font-extrabold text-sm text-carbon-soft">Preparando ingredientes...</p>
+    </div>
+  );
+}
+
