@@ -26,14 +26,16 @@ tests/ (vitest)
 ## Convenciones
 - Conventional Commits en inglés, atómicos: `feat:`, `fix:`, `chore:`, `test:`, `style:`
 - Flujo: Implementar → Verificar (`npm run build`, `npm test`) → Commit → Continuar
-- Mobile-first, max-w-md shell, BottomNav con botón central + para /ingredientes
-- Paleta: crema #F9F3E9, coral #EF705D, cielo #7CA9D6, miel #E9B85D, carbón #292B35
+- Mobile-first, Shell max-w-md móvil → md:max-w-3xl → lg:max-w-5xl; BottomNav centrada con botón central CookingPot → /ingredientes
+- Paleta: crema #F9F3E9, coral #EF705D, cielo #7CA9D6, miel #E9B85D, carbón #292B35 (+ variantes soft/mist/dark)
 - Tipografías: Baloo 2 (display) + Nunito (sans)
 - Sin emojis como iconos (solo Lucide); emojis solo en textos lúdicos mínimos
-- Imágenes: Unsplash `images.unsplash.com` con `?auto=format&fit=crop&w=800&q=80`; fallback con fondo crema
+- Sin ratings/reseñas ficticias: las tarjetas muestran tiempo, porciones y precio; nada de 4.9/5k
+- Imágenes: Unsplash `images.unsplash.com` con `?auto=format&fit=crop&w=800&q=80`; `SafeImage` con fallback si falla; cada foto debe corresponder al plato
 - Precios en Q siempre marcados como estimaciones
-- No inventar ratings reales: mostrar solo datos locales; no afirmar pixel-perfect sin captura comparada
-- Accesibilidad: aria-labels en icon-buttons, focus-ring, respects prefers-reduced-motion
+- No afirmar pixel-perfect sin captura comparada
+- Accesibilidad: aria-labels en icon-buttons, focus-ring, min touch 44px, respects prefers-reduced-motion (Reveal usa useReducedMotion)
+- Animación: Motion (`motion/react`) solo en aparición de tarjetas/secciones y modales; sin excesos
 
 ## Reglas Git
 - Git init ya hecho. Commits atómicos después de cada unidad verificada
