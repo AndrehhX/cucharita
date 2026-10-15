@@ -20,7 +20,11 @@ export interface RecipeIngredient {
   name: string;
   quantity: number; // base quantity for baseServings
   unit: string;
-  priceQ?: number; // estimated price in quetzales for base quantity
+  priceQ?: number; // estimated proportional price in quetzales for base quantity
+  packagePriceQ?: number; // estimated price for buying complete retail presentation
+  packageUnit?: string; // presentation unit, e.g. "bolsa 1 lb", "cartón 12 u"
+  priceSource?: string; // reference source
+  priceDate?: string; // reference date
   scalable?: boolean; // false for "al gusto"
 }
 
@@ -31,19 +35,65 @@ export interface RecipeStep {
   image?: string;
 }
 
+export interface RecipeRatingSummary {
+  recipeId: string;
+  totalRatings: number;
+  averageRating: number;
+  counts: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+export interface UserRating {
+  recipeId: string;
+  rating: number; // 1 to 5
+  updatedAt: number;
+}
+
+export interface IngredientBudgetItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  proportionalPriceQ: number;
+  packagePriceQ: number;
+  packageUnit: string;
+  source: string;
+  isEstimated: boolean;
+}
+
+export interface BudgetBreakdown {
+  servings: number;
+  proportionalTotalQ: number;
+  packageTotalQ: number;
+  items: IngredientBudgetItem[];
+  hasUnavailablePrices: boolean;
+}
+
 export interface Recipe {
   id: string;
   name: string;
   description: string;
   image: string;
+  imageSource?: string;
+  imageLicense?: string;
   categories: CategoryId[];
   timeMin: number;
+  prepTimeMin?: number;
+  cookTimeMin?: number;
   difficulty: Difficulty;
   baseServings: number;
   basePriceQ: number; // estimate for baseServings
   vegetarian: boolean;
   isDessert: boolean;
   isDrink?: boolean;
+  verified?: boolean;
+  sourceName?: string;
+  sourceUrl?: string;
+  originCountry?: string;
   ingredients: RecipeIngredient[];
   steps: RecipeStep[];
   tags?: string[];
@@ -73,5 +123,6 @@ export interface Filters {
   onlyDessert: boolean;
   category: CategoryId | 'todas';
   maxTime?: number;
-  sort: 'relevance' | 'time' | 'price' | 'name';
+  sort: 'relevance' | 'time' | 'price' | 'name' | 'rating';
 }
+
