@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw, Volume2, Square, CheckCircle2, Timer } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw, Volume2, Square, CheckCircle2, Timer, Sparkles } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { getRecipe } from '../../data/catalog';
 import { formatClock } from '../../lib/recipe-utils';
 import { useCountdown } from '../../hooks/useCountdown';
@@ -34,6 +35,7 @@ export default function Cooking() {
   const { incCooked, audioEnabled } = useProfile();
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
+  const reduce = useReducedMotion();
 
   const step = r?.steps[idx];
   const initialSecs = useMemo(() => (step?.minutes ? step.minutes * 60 : 0), [step]);
@@ -56,11 +58,21 @@ export default function Cooking() {
   if (done) {
     return (
       <div className="px-6 pt-16 text-center">
-        <CheckCircle2 className="w-20 h-20 mx-auto text-green-500" />
-        <h1 className="font-display font-extrabold text-3xl mt-4">¡Felicidades!</h1>
-        <p className="font-bold text-carbon-soft mt-1">Terminaste {r.name}</p>
-        <div className="mt-6 grid gap-2 max-w-sm mx-auto">
-          <Btn onClick={() => nav(`/receta/${r.id}`)}>Ver receta</Btn>
+        <motion.div
+          initial={reduce ? {} : { scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, type: 'spring' }}
+        >
+          <div className="relative inline-block">
+            <CheckCircle2 className="w-20 h-20 mx-auto text-green-500" />
+            <Sparkles className="w-6 h-6 text-miel absolute -top-1 -right-2 animate-bounce" />
+          </div>
+          <h1 className="font-display font-extrabold text-3xl mt-4">¡Felicidades, pequeña chef!</h1>
+          <p className="font-bold text-carbon-soft mt-1">Has preparado {r.name} con éxito ♡</p>
+          <p className="text-sm font-semibold text-carbon-muted mt-2">Esta receta ha sido sumada a tu contador personal.</p>
+        </motion.div>
+        <div className="mt-8 grid gap-2.5 max-w-sm mx-auto">
+          <Btn onClick={() => nav(`/receta/${r.id}`)}>Ver receta terminada</Btn>
           <Btn variant="outline" onClick={() => nav('/')}>Volver al inicio</Btn>
         </div>
       </div>
@@ -71,31 +83,40 @@ export default function Cooking() {
   const ratio = timer.total > 0 ? timer.left / timer.total : 0;
 
   return (
-    <div className="px-4 md:px-2 pt-safe min-h-dvh flex flex-col">
+    <div className="px-4 md:px-2 pt-safe min-h-dvh flex flex-col pb-8">
+      {/* Top Header */}
       <div className="flex items-center gap-3 pt-4">
-        <button aria-label="Salir del modo cocina" onClick={() => nav(`/receta/${r.id}`)} className="w-10 h-10 grid place-items-center bg-white rounded-full shadow-soft border border-black/5 shrink-0">
+        <button aria-label="Salir del modo cocina" onClick={() => nav(`/receta/${r.id}`)} className="w-10 h-10 grid place-items-center bg-white rounded-full shadow-soft border border-black/5 shrink-0 active:scale-95 transition">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <p className="text-[12px] font-extrabold text-carbon-soft">Paso {idx + 1} de {r.steps.length} • {r.name}</p>
+          <p className="text-[12px] font-extrabold text-carbon-soft truncate">Paso {idx + 1} de {r.steps.length} • {r.name}</p>
           <div className="h-2.5 bg-white rounded-full overflow-hidden shadow-inner mt-1">
-            <div className="h-full bg-gradient-to-r from-miel via-coral to-coral-dark transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-gradient-to-r from-miel via-coral to-coral-dark transition-all duration-300" style={{ width: `${progress}%` }} />
           </div>
         </div>
         <span className="text-[11px] font-extrabold bg-white px-2.5 py-1.5 rounded-full shadow-soft">{Math.round(progress)}%</span>
       </div>
 
-      <div className="mt-4 bg-white rounded-[1.8rem] shadow-card border border-black/[0.04] p-5 md:p-8 md:grid md:grid-cols-2 md:gap-6">
+      {/* Main Step Card with Motion Transition */}
+      <motion.div
+        key={idx}
+        initial={reduce ? {} : { opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -16 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="mt-4 bg-white rounded-[1.8rem] shadow-card border border-black/[0.04] p-5 md:p-8 md:grid md:grid-cols-2 md:gap-6 flex-1 flex flex-col justify-between"
+      >
         <div>
           <span className="inline-grid place-items-center w-11 h-11 rounded-2xl bg-coral text-white font-display font-extrabold text-xl shadow-pop">{idx + 1}</span>
           <p className="text-[19px] md:text-2xl font-bold mt-3 leading-relaxed">{step.instruction}</p>
           {step.image && <SafeImage src={step.image} alt={`Paso ${idx + 1}`} className="mt-4 rounded-2xl w-full aspect-video object-cover" />}
           {supportsSpeech() && audioEnabled && (
-            <div className="mt-3 flex gap-2">
-              <button onClick={() => speak(step.instruction)} className="flex items-center gap-1.5 text-sm font-extrabold bg-cielo-soft text-cielo-dark px-4 py-2.5 rounded-full min-h-[44px]">
+            <div className="mt-4 flex gap-2">
+              <button onClick={() => speak(step.instruction)} className="flex items-center gap-1.5 text-sm font-extrabold bg-cielo-soft text-cielo-dark px-4 py-2.5 rounded-full min-h-[44px] active:scale-95 transition">
                 <Volume2 className="w-4 h-4" /> Escuchar paso
               </button>
-              <button onClick={stopSpeak} className="flex items-center gap-1.5 text-sm font-extrabold bg-black/5 px-4 py-2.5 rounded-full min-h-[44px]">
+              <button onClick={stopSpeak} className="flex items-center gap-1.5 text-sm font-extrabold bg-black/5 px-4 py-2.5 rounded-full min-h-[44px] active:scale-95 transition">
                 <Square className="w-4 h-4" /> Detener
               </button>
             </div>
@@ -137,16 +158,17 @@ export default function Cooking() {
           )}
           <p className="mt-3 text-[12px] font-bold text-carbon-soft">Porciones: {sp.get('porciones') ?? r.baseServings}</p>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-2 gap-2 mt-4 pb-4 max-w-2xl mx-auto w-full">
+      {/* Navigation Buttons */}
+      <div className="grid grid-cols-2 gap-2 mt-4 max-w-2xl mx-auto w-full">
         <Btn variant="outline" onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0} className="py-4">
           <ArrowLeft className="w-4 h-4" /> Anterior
         </Btn>
         {idx < r.steps.length - 1 ? (
           <Btn onClick={() => setIdx((i) => i + 1)} className="py-4">Siguiente <ArrowRight className="w-4 h-4" /></Btn>
         ) : (
-          <Btn onClick={finish} className="py-4">Terminar</Btn>
+          <Btn onClick={finish} className="py-4">¡Terminar receta!</Btn>
         )}
       </div>
     </div>
