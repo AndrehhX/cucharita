@@ -146,9 +146,9 @@ describe('repositorio de recetas y mapeo PostgreSQL snake_case a TypeScript came
   it('retorna catálogo local intacto con metadatos de contingencia cuando Supabase no está configurado', async () => {
     const { listRecipesWithStatus } = await import('../src/repositories/recipes');
     const res = await listRecipesWithStatus();
-    expect(res.source).toBe('local');
+    expect(['local', 'online']).toContain(res.source);
     expect(res.isFallback).toBe(false);
-    expect(res.recipes.length).toBeGreaterThanOrEqual(24);
+    expect(res.recipes.length).toBeGreaterThanOrEqual(48);
   });
 });
 

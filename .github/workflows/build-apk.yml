@@ -1,0 +1,100 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Build Web Production Assets
+        run: npm run build
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android APK (Debug / Standalone)
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Rename and Prepare APK
+        run: |
+          mkdir -p build-output
+          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/cucharita.apk
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucharita-apk
+          path: build-output/cucharita.apk
+          retention-days: 30
+
+      - name: Publish or Update Release Asset
+        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: "Cucharita v1.0.0 (APK Android Oficial)"
+          body: |
+            ## 🥣 Cucharita - App de Recetas para Android
+            
+            ¡Ya puedes instalar **Cucharita** directamente en tu celular Android!
+            
+            ### ✨ Novedades y Características:
+            - **48 Recetas Auténticas:** Tradición guatemalteca, comidas latinoamericanas, pastas, desayunos, postres y meriendas.
+            - **Recetas en Tiempo Real:** Integración en vivo con TheMealDB para descubrir cientos de platos adicionales con conexión a internet.
+            - **Presupuestos en Quetzales (GTQ):** Costos de ingredientes calculados para Guatemala.
+            - **Filtro de Pocos o Muchos Ingredientes:** Encuentra recetas fáciles con ≤ 5 ingredientes o platos familiares completos.
+            - **Cronómetros Incrustados:** Temporizadores en cada paso de preparación.
+            - **Audio Recetas:** Narración por voz en español de cada instrucción.
+            - **Actualización Automática:** La app detecta si hay nuevas versiones y te avisa dentro de la aplicación.
+            - **100% Seguro y Privado:** Sin publicidad ni rastreo, diseñado para disfrutar cocinando.
+            
+            ### 📲 Instrucciones de Instalación:
+            1. Descarga el archivo `cucharita.apk` en tu teléfono Android.
+            2. Si Android te pregunta, permite **"Instalar aplicaciones de fuentes desconocidas"** para tu navegador.
+            3. Abre el archivo descargado y presiona **Instalar**.
+            4. ¡Listo! Abre Cucharita y empieza a cocinar.
+          files: build-output/cucharita.apk
+          prerelease: false
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

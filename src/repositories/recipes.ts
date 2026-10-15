@@ -1,10 +1,11 @@
 import type { Recipe, RecipeIngredient, RecipeStep } from '../types';
 import { RECIPES } from '../data/catalog';
 import { getSupabase } from './supabase';
+import { fetchOnlineRecipes } from './online-recipes';
 
 export interface RecipeListResponse {
   recipes: Recipe[];
-  source: 'remote' | 'local';
+  source: 'remote' | 'local' | 'online';
   isFallback: boolean;
   error?: string;
 }
@@ -58,6 +59,21 @@ export function mapDbRecipeToRecipe(row: any): Recipe {
 export async function listRecipesWithStatus(): Promise<RecipeListResponse> {
   const sb = getSupabase();
   if (!sb) {
+    try {
+      const online = await fetchOnlineRecipes();
+      if (online.length > 0) {
+        const existingIds = new Set(RECIPES.map((r) => r.id));
+        const newOnline = online.filter((r) => !existingIds.has(r.id));
+        return {
+          recipes: [...RECIPES, ...newOnline],
+          source: 'online',
+          isFallback: false,
+        };
+      }
+    } catch {
+      // si falla internet, continúa con local
+    }
+
     return {
       recipes: RECIPES,
       source: 'local',

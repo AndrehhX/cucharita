@@ -778,7 +778,25 @@ const BASE_RECIPES: Recipe[] = [
 
 export const RECIPES: Recipe[] = [...BASE_RECIPES, ...EXPANDED_RECIPES];
 
-export const getRecipe = (id: string) => RECIPES.find((r) => r.id === id);
+export const getRecipe = (id: string): Recipe | undefined => {
+  const local = RECIPES.find((r) => r.id === id);
+  if (local) return local;
+
+  try {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('cucharita:online_recipes:v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.recipes)) {
+          return parsed.recipes.find((r: Recipe) => r.id === id);
+        }
+      }
+    }
+  } catch {
+    // fallback silencioso
+  }
+  return undefined;
+};
 
 export const POPULAR_IDS = [
   'pepian-pollo',
