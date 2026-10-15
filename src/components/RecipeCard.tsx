@@ -1,35 +1,52 @@
 import { Link } from 'react-router-dom';
-import { Clock, Heart, Star } from 'lucide-react';
+import { Clock, Heart, Users } from 'lucide-react';
 import type { Recipe } from '../types';
 import { useFavorites } from '../features/favorites/store';
+import SafeImage from './SafeImage';
+import { PricePill, VegBadge } from './ui';
+import { Reveal } from './Reveal';
 
-export default function RecipeCard({ r, compact = false }: { r: Recipe; compact?: boolean }) {
+export default function RecipeCard({ r, delay = 0 }: { r: Recipe; delay?: number }) {
   const { isFav, toggle } = useFavorites();
   const fav = isFav(r.id);
   return (
-    <div className={`card-press relative bg-white rounded-3xl overflow-hidden shadow-card ${compact ? '' : ''}`}>
-      <Link to={`/receta/${r.id}`} className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-cremaDark">
-          <img src={r.image} alt={r.name} loading="lazy" className="w-full h-full object-cover" />
-          <span className="absolute bottom-2 right-2 bg-white/95 text-[11px] font-extrabold px-2 py-1 rounded-full shadow-soft">
-            Q{r.basePriceQ} • {r.baseServings} pers.
-          </span>
-        </div>
-        <div className="p-3">
-          <h3 className="font-display font-bold leading-tight line-clamp-2 min-h-[2.4em]">{r.name}</h3>
-          <div className="mt-1 flex items-center gap-2 text-[12px] font-bold text-carbon-soft">
-            <span className="flex items-center gap-1 text-[#E9A100]"><Star className="w-3.5 h-3.5 fill-current" />4.8</span>
-            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{r.timeMin} min</span>
+    <Reveal delay={delay} className="h-full">
+      <article className="card-press group relative bg-white rounded-[1.4rem] overflow-hidden shadow-card border border-black/[0.04] h-full flex flex-col">
+        <Link to={`/receta/${r.id}`} className="block flex-1" aria-label={`Ver ${r.name}`}>
+          <div className="relative aspect-[4/3] overflow-hidden bg-cremaDark">
+            <SafeImage
+              src={r.image}
+              alt={r.name}
+              className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/25 to-transparent" />
+            <span className="absolute bottom-2 right-2">
+              <PricePill price={r.basePriceQ} servings={r.baseServings} />
+            </span>
+            {r.vegetarian && (
+              <span className="absolute top-2 left-2"><VegBadge /></span>
+            )}
           </div>
-        </div>
-      </Link>
-      <button
-        aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-        onClick={() => toggle(r.id)}
-        className={`absolute top-2 right-2 w-8 h-8 grid place-items-center rounded-full shadow-soft ${fav ? 'bg-coral text-white' : 'bg-white/95 text-carbon'}`}
-      >
-        <Heart className={`w-4 h-4 ${fav ? 'fill-current' : ''}`} />
-      </button>
-    </div>
+          <div className="p-3">
+            <h3 className="font-display font-bold leading-[1.15] line-clamp-2 min-h-[2.5em] text-[15px]">{r.name}</h3>
+            <div className="mt-1.5 flex items-center gap-2.5 text-[12px] font-extrabold text-carbon-soft">
+              <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{r.timeMin} min</span>
+              <span className="inline-flex items-center gap-1"><Users className="w-3.5 h-3.5" />{r.baseServings}</span>
+              <span className="ml-auto hidden sm:inline text-coral-deep">{r.difficulty}</span>
+            </div>
+          </div>
+        </Link>
+        <button
+          aria-label={fav ? `Quitar ${r.name} de favoritos` : `Guardar ${r.name} en favoritos`}
+          aria-pressed={fav}
+          onClick={() => toggle(r.id)}
+          className={`absolute top-2 right-2 w-9 h-9 grid place-items-center rounded-full shadow-soft transition active:scale-90 ${
+            fav ? 'bg-coral text-white animate-pop' : 'bg-white/95 text-carbon hover:text-coral'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${fav ? 'fill-current' : ''}`} />
+        </button>
+      </article>
+    </Reveal>
   );
 }

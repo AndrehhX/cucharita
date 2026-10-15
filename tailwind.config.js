@@ -5,27 +5,32 @@ export default {
     extend: {
       colors: {
         crema: '#F9F3E9',
-        cremaDark: '#F1E7D3',
+        cremaDark: '#EFE2CC',
         coral: {
           DEFAULT: '#EF705D',
-          dark: '#D95A45',
-          light: '#FF8A75',
-          soft: '#FDE7E1',
+          dark: '#D65440',
+          deep: '#C14A36',
+          light: '#FF9A86',
+          soft: '#FDE5DE',
+          mist: '#FFF1EC',
         },
         cielo: {
           DEFAULT: '#7CA9D6',
-          dark: '#5E8FC0',
-          soft: '#E2EEF9',
+          dark: '#5B8CBE',
+          soft: '#E1EDF9',
+          mist: '#F0F7FD',
         },
         miel: {
           DEFAULT: '#E9B85D',
-          dark: '#D1A04A',
-          soft: '#FDF0D5',
+          dark: '#C9983F',
+          soft: '#FCEDCB',
+          mist: '#FDF6E3',
         },
         carbon: {
           DEFAULT: '#292B35',
-          soft: '#5A5E72',
+          soft: '#5C6072',
           muted: '#9AA0B4',
+          faint: '#E4E2D9',
         },
       },
       fontFamily: {
@@ -35,12 +40,27 @@ export default {
       borderRadius: {
         xl2: '1.4rem',
         xl3: '1.8rem',
-        xl4: '2.2rem',
+        xl4: '2.4rem',
       },
       boxShadow: {
-        card: '0 8px 24px -8px rgba(41,43,53,0.18)',
-        pop: '0 12px 32px -10px rgba(239,112,93,0.45)',
-        soft: '0 4px 16px -4px rgba(41,43,53,0.12)',
+        card: '0 10px 28px -12px rgba(41,43,53,0.22)',
+        pop: '0 14px 30px -10px rgba(239,112,93,0.5)',
+        soft: '0 4px 14px -6px rgba(41,43,53,0.14)',
+        hero: '0 18px 40px -18px rgba(239,112,93,0.45)',
+      },
+      keyframes: {
+        float: {
+          '0%,100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        pop: {
+          '0%': { transform: 'scale(0.6)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
+      animation: {
+        float: 'float 5s ease-in-out infinite',
+        pop: 'pop .18s ease-out',
       },
     },
   },

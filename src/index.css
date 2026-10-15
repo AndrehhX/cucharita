@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,23 +15,24 @@ html { -webkit-tap-highlight-color: transparent; }
 body {
   @apply bg-crema text-carbon font-sans antialiased;
   overscroll-behavior-y: none;
+  background-image:
+    radial-gradient(1200px 500px at 50% -10%, rgba(239,112,93,0.08), transparent 60%),
+    radial-gradient(900px 420px at 110% 10%, rgba(124,169,214,0.1), transparent 60%);
+  background-attachment: fixed;
 }
 
 #root { min-height: 100dvh; }
 
-/* safe-area for Capacitor / mobile */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.snap-row { scroll-snap-type: x mandatory; }
+.snap-row > * { scroll-snap-align: start; }
 
-.card-press { transition: transform .15s ease, box-shadow .15s ease; }
-.card-press:active { transform: scale(.97); }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
+.card-press { transition: transform 0.16s ease, box-shadow 0.16s ease; }
+.card-press:active { transform: scale(0.97); }
 
 .skeleton {
   @apply animate-pulse bg-gradient-to-r from-cremaDark via-white to-cremaDark bg-[length:200%_100%];
@@ -40,4 +41,15 @@ body {
 .focus-ring:focus-visible {
   outline: 3px solid #7CA9D6;
   outline-offset: 2px;
+}
+
+/* decorative blobs */
+.blob { position: absolute; border-radius: 9999px; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
