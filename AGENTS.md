@@ -11,22 +11,23 @@
 ## Arquitectura
 ```
 src/
-  app/ (router, Shell con transiciones fluidas)
-  components/ (BottomNav, RecipeCard, SafeImage, Reveal, ui)
+  app/ (router con lazy loading y Suspense, Shell con transiciones fluidas)
+  components/ (BottomNav, RecipeCard, SafeImage, Reveal, ui con PageLoader)
   features/ (recipes, cooking, favorites, collections, profile, search)
   hooks/ (useCountdown con timestamps de alta precisión)
   lib/ (recipe-utils: escalado, fracciones, presupuestos GTQ, match ingredientes semántico, timers)
   repositories/ 
     - supabase.ts (cliente null-safe)
-    - recipes.ts (repo con fallback local)
-    - ratings.ts (calificaciones auténticas 1-5 estrellas locales y remotas)
+    - recipes.ts (repo con fallback local y mapeo snake_case -> camelCase)
+    - ratings.ts (calificaciones auténticas 1-5 estrellas locales y remotas autenticadas)
     - sync.ts (migración no destructiva de favoritos y carpetas)
   data/ (catalog.ts: recetas auténticas, gastronomía guatemalteca y latinoamericana, procedencia y licencias)
   types/ (tipos estrictos: Recipe, BudgetBreakdown, RecipeRatingSummary, etc.)
 supabase/migrations/
   - 001_init.sql (tablas base)
-  - 002_premium_expansion.sql (ingredientes normalizados, valoraciones auténticas, pasos, RLS)
-tests/ (vitest: tests unitarios de utilidades, presupuesto, búsqueda y sincronización)
+  - 002_premium_expansion.sql (ingredientes normalizados, valoraciones, pasos, RLS)
+  - 003_security_hardening.sql (RLS estricto, bloqueo de escritura anónima remota, permisos de solo lectura)
+tests/ (vitest: tests unitarios de utilidades, presupuesto, búsqueda, integridad de catálogo y sincronización)
 ```
 
 ## Convenciones
@@ -41,6 +42,7 @@ tests/ (vitest: tests unitarios de utilidades, presupuesto, búsqueda y sincroni
 - Precios en Q: calculados por ingrediente distinguiendo coste proporcional de consumo vs compra de presentación completa comercial en GT
 - Accesibilidad: aria-labels en icon-buttons, focus-ring, min touch 44px, respects prefers-reduced-motion (Reveal y Cooking usan useReducedMotion)
 - Animación: Motion (`motion/react`) sutil y fluida en pasos de cocina, transiciones de ruta, aparición de tarjetas y modales
+- Rendimiento: Code-splitting con `React.lazy` para mantener el bundle inicial por debajo de 400 kB
 
 ## Reglas Git
 - Git init ya hecho. Commits atómicos después de cada unidad verificada
@@ -59,3 +61,4 @@ tests/ (vitest: tests unitarios de utilidades, presupuesto, búsqueda y sincroni
 - Sin registro obligatorio; modo invitado como experiencia principal
 - Espacio seguro para menores: sin datos personales, sin anuncios, sin funciones sociales ni perfiles públicos
 - No exponer service_role en frontend; solo anon key
+- En base de datos remota: escrituras de calificaciones restringidas a sesiones autenticadas; modo invitado almacena valoraciones exclusivamente en el dispositivo local para evitar suplantación o manipulación de promedios
