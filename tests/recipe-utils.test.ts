@@ -68,6 +68,37 @@ describe('porciones y presupuesto', () => {
     expect(scaledBudget.items[0].quantity).toBe(1);
     expect(scaledBudget.items[1].quantity).toBe(2);
   });
+
+  it('detecta ingredientes sin precio y activa hasUnavailablePrices', () => {
+    const unpricedRecipe: Recipe = {
+      ...base,
+      id: 'unpriced',
+      ingredients: [
+        { name: 'Hierba exótica', quantity: 1, unit: 'ramito' }, // priceQ no definido
+        { name: 'Arroz', quantity: 1, unit: 'taza', priceQ: 5, packagePriceQ: 8 },
+      ],
+    };
+    const budget = calculateBudgetBreakdown(unpricedRecipe, 4);
+    expect(budget.hasUnavailablePrices).toBe(true);
+    expect(budget.proportionalTotalQ).toBe(5);
+  });
+
+  it('maneja porciones límite (1 porción, 12 porciones, 0 baseServings seguro)', () => {
+    expect(estimatePrice({ ...base, baseServings: 0 }, 4)).toBe(40);
+    const minBudget = calculateBudgetBreakdown(base, 1);
+    expect(minBudget.servings).toBe(1);
+    expect(minBudget.proportionalTotalQ).toBeGreaterThan(0);
+    const maxBudget = calculateBudgetBreakdown(base, 12);
+    expect(maxBudget.servings).toBe(12);
+    expect(maxBudget.proportionalTotalQ).toBe(56); // (10 * 3) + (8 * 3) + 2 = 30 + 24 + 2 = 56
+  });
+
+  it('formatea fracciones de tercios y decimales limpios', () => {
+    expect(formatQty(0.33)).toBe('⅓');
+    expect(formatQty(0.67)).toBe('⅔');
+    expect(formatQty(2.33)).toBe('2⅓');
+    expect(formatQty(0)).toBe('0');
+  });
 });
 
 describe('filtros de catálogo', () => {

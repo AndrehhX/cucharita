@@ -101,3 +101,54 @@ describe('estrategia de sincronización segura (no destructiva)', () => {
     expect(persisted.state.ids).toEqual(['pepian-pollo', 'rellenitos-platano']);
   });
 });
+
+describe('repositorio de recetas y mapeo PostgreSQL snake_case a TypeScript camelCase', () => {
+  it('mapea correctamente columnas snake_case de base de datos a camelCase', async () => {
+    const { mapDbRecipeToRecipe } = await import('../src/repositories/recipes');
+    const dbRow = {
+      id: 'db-receta-1',
+      name: 'Pollo en Crema',
+      description: 'Receta tradicional',
+      image: 'https://images.unsplash.com/photo-12345',
+      time_min: 35,
+      prep_time_min: 15,
+      cook_time_min: 20,
+      difficulty: 'Media',
+      base_servings: 5,
+      base_price_q: 55,
+      vegetarian: false,
+      is_dessert: false,
+      is_drink: false,
+      origin_country: 'Guatemala',
+      source_name: 'Libro de Recetas Chapinas',
+      source_url: 'https://example.com',
+      image_source: 'Unsplash',
+      image_license: 'Unsplash License',
+      categories: ['comidas'],
+      ingredients: [{ name: 'Pollo', quantity: 2, unit: 'lb' }],
+      steps: [{ instruction: 'Cocinar pollo' }],
+      tags: ['tradicional'],
+    };
+
+    const mapped = mapDbRecipeToRecipe(dbRow);
+    expect(mapped.id).toBe('db-receta-1');
+    expect(mapped.timeMin).toBe(35);
+    expect(mapped.prepTimeMin).toBe(15);
+    expect(mapped.cookTimeMin).toBe(20);
+    expect(mapped.baseServings).toBe(5);
+    expect(mapped.basePriceQ).toBe(55);
+    expect(mapped.isDessert).toBe(false);
+    expect(mapped.isDrink).toBe(false);
+    expect(mapped.originCountry).toBe('Guatemala');
+    expect(mapped.sourceName).toBe('Libro de Recetas Chapinas');
+  });
+
+  it('retorna catálogo local intacto con metadatos de contingencia cuando Supabase no está configurado', async () => {
+    const { listRecipesWithStatus } = await import('../src/repositories/recipes');
+    const res = await listRecipesWithStatus();
+    expect(res.source).toBe('local');
+    expect(res.isFallback).toBe(false);
+    expect(res.recipes.length).toBeGreaterThanOrEqual(24);
+  });
+});
+

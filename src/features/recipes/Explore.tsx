@@ -1,21 +1,35 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Search, X, Leaf, CakeSlice, SlidersHorizontal } from 'lucide-react';
 import { RECIPES } from '../../data/catalog';
 import { filterRecipes } from '../../lib/recipe-utils';
-import type { Filters } from '../../types';
+import { listRecipesWithStatus } from '../../repositories/recipes';
+import type { Filters, Recipe } from '../../types';
 import RecipeCard from '../../components/RecipeCard';
 import SafeImage from '../../components/SafeImage';
 import { Btn, Chip, Empty } from '../../components/ui';
 
 export default function Explore() {
   const [sp, setSp] = useSearchParams();
+  const [recipes, setRecipes] = useState<Recipe[]>(RECIPES);
+  const [dataSource, setDataSource] = useState<'local' | 'remote'>('local');
   const [q, setQ] = useState('');
   const [price, setPrice] = useState<Filters['price']>('all');
   const [servings, setServings] = useState<Filters['servings']>('all');
   const [onlyVeg, setOnlyVeg] = useState(false);
   const [onlyDessert, setOnlyDessert] = useState(false);
   const [sort, setSort] = useState<Filters['sort']>('relevance');
+
+  useEffect(() => {
+    let active = true;
+    listRecipesWithStatus().then((res) => {
+      if (active && res.source === 'remote') {
+        setRecipes(res.recipes);
+        setDataSource('remote');
+      }
+    });
+    return () => { active = false; };
+  }, []);
 
   const catParam = sp.get('cat');
   const category: Filters['category'] =
@@ -27,9 +41,9 @@ export default function Explore() {
 
   const results = useMemo(() => {
     const f: Filters = { q, price, servings, onlyVeg, onlyDessert, category, sort };
-    if (sp.get('fast') === '1') return filterRecipes(RECIPES, { ...f, sort: 'time' }).filter((r) => r.timeMin <= 20);
-    return filterRecipes(RECIPES, f);
-  }, [q, price, servings, onlyVeg, onlyDessert, category, sort, sp]);
+    if (sp.get('fast') === '1') return filterRecipes(recipes, { ...f, sort: 'time' }).filter((r) => r.timeMin <= 20);
+    return filterRecipes(recipes, f);
+  }, [q, price, servings, onlyVeg, onlyDessert, category, sort, sp, recipes]);
 
   const clear = () => {
     setQ(''); setPrice('all'); setServings('all'); setOnlyVeg(false); setOnlyDessert(false);
@@ -100,7 +114,14 @@ export default function Explore() {
 
       {/* Results */}
       <div id="resultados" className="flex items-center justify-between mt-5 mb-2.5 scroll-mt-4">
-        <h3 className="font-display font-extrabold text-[17px]">Resultados ({results.length})</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-display font-extrabold text-[17px]">Resultados ({results.length})</h3>
+          {dataSource === 'remote' && (
+            <span className="text-[10px] font-extrabold bg-[#E4F0E1] text-[#2F7A3D] px-2 py-0.5 rounded-full">
+              En la nube
+            </span>
+          )}
+        </div>
         <label className="flex items-center gap-1.5 text-[13px] font-extrabold bg-white px-3 py-2 rounded-full shadow-soft border border-black/5">
           Ordenar
           <select aria-label="Ordenar resultados" value={sort} onChange={(e) => setSort(e.target.value as Filters['sort'])} className="bg-transparent outline-none font-extrabold text-coral-deep">
