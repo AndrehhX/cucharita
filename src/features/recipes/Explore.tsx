@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Search, X, Leaf, CakeSlice } from 'lucide-react';
+import { ArrowLeft, Search, X, Leaf, CakeSlice, SlidersHorizontal } from 'lucide-react';
 import { RECIPES } from '../../data/catalog';
 import { filterRecipes } from '../../lib/recipe-utils';
 import type { Filters } from '../../types';
 import RecipeCard from '../../components/RecipeCard';
+import SafeImage from '../../components/SafeImage';
 import { Btn, Chip, Empty } from '../../components/ui';
 
 export default function Explore() {
@@ -25,7 +26,7 @@ export default function Explore() {
     : 'todas';
 
   const results = useMemo(() => {
-    let f: Filters = { q, price, servings, onlyVeg, onlyDessert, category, sort };
+    const f: Filters = { q, price, servings, onlyVeg, onlyDessert, category, sort };
     if (sp.get('fast') === '1') return filterRecipes(RECIPES, { ...f, sort: 'time' }).filter((r) => r.timeMin <= 20);
     return filterRecipes(RECIPES, f);
   }, [q, price, servings, onlyVeg, onlyDessert, category, sort, sp]);
@@ -36,72 +37,105 @@ export default function Explore() {
   };
 
   return (
-    <div className="px-4 pt-safe">
+    <div className="px-4 md:px-2 pt-safe">
+      {/* Search */}
       <div className="flex items-center gap-2 pt-4">
-        <button aria-label="Atrás" onClick={() => history.back()} className="w-9 h-9 grid place-items-center"><ArrowLeft /></button>
-        <div className="flex-1 flex items-center gap-2 bg-white rounded-full px-4 py-3 shadow-soft">
-          <Search className="w-4 h-4 text-carbon-soft" />
+        <button aria-label="Atrás" onClick={() => history.back()} className="w-10 h-10 grid place-items-center bg-white rounded-full shadow-soft border border-black/5 shrink-0">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1 flex items-center gap-2 bg-white rounded-full pl-4 pr-1.5 py-1.5 shadow-soft border border-black/5">
+          <Search className="w-4 h-4 text-carbon-muted shrink-0" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar recetas o ingredientes..."
-            className="flex-1 bg-transparent outline-none text-sm font-semibold"
+            aria-label="Buscar recetas o ingredientes"
+            className="flex-1 bg-transparent outline-none text-sm font-bold placeholder:text-carbon-muted min-w-0"
           />
-          {q && <button aria-label="Limpiar" onClick={() => setQ('')}><X className="w-4 h-4" /></button>}
+          {q ? (
+            <button aria-label="Limpiar búsqueda" onClick={() => setQ('')} className="w-8 h-8 grid place-items-center rounded-full bg-crema">
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
+            <span className="w-9 h-9 grid place-items-center rounded-full bg-coral text-white shrink-0"><Search className="w-4 h-4" /></span>
+          )}
         </div>
       </div>
 
-      <h2 className="font-display font-extrabold text-lg mt-4">Filtros</h2>
-      <div className="mt-2 space-y-3 text-sm font-bold">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-coral">Precio:</span>
-          <Chip active={price === 'all'} onClick={() => setPrice('all')}>Todos</Chip>
-          <Chip active={price === 'low'} onClick={() => setPrice('low')}>&lt; Q25</Chip>
-          <Chip active={price === 'mid'} onClick={() => setPrice('mid')}>Q25 – Q50</Chip>
-          <Chip active={price === 'high'} onClick={() => setPrice('high')}>&gt; Q50</Chip>
+      {/* Filters card */}
+      <section aria-label="Filtros" className="mt-4 bg-white rounded-[1.8rem] shadow-card border border-black/[0.04] p-5">
+        <h2 className="font-display font-extrabold text-lg flex items-center gap-2">
+          <SlidersHorizontal className="w-5 h-5 text-coral" /> Filtros
+        </h2>
+
+        <div className="mt-3">
+          <p className="text-[13px] font-extrabold text-coral-deep mb-1.5">Precio estimado</p>
+          <div className="flex gap-2 flex-wrap">
+            <Chip active={price === 'all'} onClick={() => setPrice('all')}>Todos</Chip>
+            <Chip active={price === 'low'} onClick={() => setPrice('low')}>&lt; Q25</Chip>
+            <Chip active={price === 'mid'} onClick={() => setPrice('mid')}>Q25 – Q50</Chip>
+            <Chip active={price === 'high'} onClick={() => setPrice('high')}>&gt; Q50</Chip>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-coral">Personas:</span>
-          <Chip active={servings === '1-2'} onClick={() => setServings(servings === '1-2' ? 'all' : '1-2')}>1–2</Chip>
-          <Chip active={servings === '3-4'} onClick={() => setServings(servings === '3-4' ? 'all' : '3-4')}>3–4</Chip>
-          <Chip active={servings === '5+'} onClick={() => setServings(servings === '5+' ? 'all' : '5+')}>5+</Chip>
+
+        <div className="mt-3">
+          <p className="text-[13px] font-extrabold text-coral-deep mb-1.5">Personas</p>
+          <div className="flex gap-2">
+            <Chip active={servings === '1-2'} onClick={() => setServings(servings === '1-2' ? 'all' : '1-2')}>1–2</Chip>
+            <Chip active={servings === '3-4'} onClick={() => setServings(servings === '3-4' ? 'all' : '3-4')}>3–4</Chip>
+            <Chip active={servings === '5+'} onClick={() => setServings(servings === '5+' ? 'all' : '5+')}>5+</Chip>
+          </div>
         </div>
-        <Toggle icon={<Leaf className="w-4 h-4" />} label="Solo vegetarianas" value={onlyVeg} onChange={setOnlyVeg} />
-        <Toggle icon={<CakeSlice className="w-4 h-4" />} label="Solo postres" value={onlyDessert} onChange={setOnlyDessert} />
-        <div className="grid grid-cols-2 gap-2">
+
+        <div className="mt-3 space-y-2">
+          <Toggle icon={<Leaf className="w-4 h-4 text-[#2F7A3D]" />} label="Solo vegetarianas" value={onlyVeg} onChange={setOnlyVeg} />
+          <Toggle icon={<CakeSlice className="w-4 h-4 text-miel-dark" />} label="Solo postres" value={onlyDessert} onChange={setOnlyDessert} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mt-4">
           <Btn variant="outline" onClick={clear}>Limpiar filtros</Btn>
-          <Btn onClick={() => {}}>Aplicar filtros</Btn>
+          <Btn onClick={() => document.getElementById('resultados')?.scrollIntoView({ behavior: 'smooth' })}>Aplicar filtros</Btn>
         </div>
-      </div>
+      </section>
 
-      <div className="flex items-center justify-between mt-4 mb-2">
-        <h3 className="font-extrabold">Resultados ({results.length} recetas)</h3>
-        <select aria-label="Ordenar" value={sort} onChange={(e) => setSort(e.target.value as Filters['sort'])} className="bg-transparent text-[13px] font-extrabold">
-          <option value="relevance">Ordenar por</option>
-          <option value="time">Tiempo</option>
-          <option value="price">Precio</option>
-          <option value="name">Nombre</option>
-        </select>
+      {/* Results */}
+      <div id="resultados" className="flex items-center justify-between mt-5 mb-2.5 scroll-mt-4">
+        <h3 className="font-display font-extrabold text-[17px]">Resultados ({results.length})</h3>
+        <label className="flex items-center gap-1.5 text-[13px] font-extrabold bg-white px-3 py-2 rounded-full shadow-soft border border-black/5">
+          Ordenar
+          <select aria-label="Ordenar resultados" value={sort} onChange={(e) => setSort(e.target.value as Filters['sort'])} className="bg-transparent outline-none font-extrabold text-coral-deep">
+            <option value="relevance">Relevancia</option>
+            <option value="time">Tiempo</option>
+            <option value="price">Precio</option>
+            <option value="name">Nombre</option>
+          </select>
+        </label>
       </div>
 
       {results.length === 0 ? (
         <Empty title="Sin resultados" hint="Prueba con otra búsqueda o limpia los filtros." />
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {results.map((r) => <RecipeCard key={r.id} r={r} />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {results.map((r, i) => <RecipeCard key={r.id} r={r} delay={Math.min(i, 6) * 0.04} />)}
         </div>
       )}
+      <div className="hidden"><SafeImage src={RECIPES[0].image} alt="" /></div>
     </div>
   );
 }
 
 function Toggle({ icon, label, value, onChange }: { icon: React.ReactNode; label: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button onClick={() => onChange(!value)} className="w-full flex items-center gap-2 bg-white rounded-2xl px-3 py-3 shadow-soft">
-      <span className="w-8 h-8 grid place-items-center rounded-full bg-crema">{icon}</span>
-      <span className="flex-1 text-left">{label}</span>
-      <span className={`w-11 h-6 rounded-full p-1 transition ${value ? 'bg-coral' : 'bg-black/15'}`}>
-        <span className={`block w-4 h-4 bg-white rounded-full transition ${value ? 'ml-auto' : ''}`} />
+    <button
+      role="switch"
+      aria-checked={value}
+      onClick={() => onChange(!value)}
+      className="w-full flex items-center gap-2.5 bg-crema rounded-2xl px-3 py-2.5 min-h-[52px] text-left"
+    >
+      <span className="w-9 h-9 grid place-items-center rounded-full bg-white shadow-soft shrink-0">{icon}</span>
+      <span className="flex-1 text-sm font-extrabold">{label}</span>
+      <span className={`w-12 h-7 rounded-full p-1 transition shrink-0 ${value ? 'bg-coral' : 'bg-black/15'}`}>
+        <span className={`block w-5 h-5 bg-white rounded-full shadow transition ${value ? 'ml-auto' : ''}`} />
       </span>
     </button>
   );
